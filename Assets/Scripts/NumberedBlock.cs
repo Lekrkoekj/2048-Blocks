@@ -80,7 +80,7 @@ public class NumberedBlock : MonoBehaviour
                 currentGameOverTime -= Time.deltaTime;
             }
             warningIconFill.transform.position = Camera.main.WorldToScreenPoint(transform.position);
-            if (currentGameOverTime > 0.2f)
+            if (currentGameOverTime > 0.3f)
             {
                 warningIconFill.transform.parent.gameObject.SetActive(true);
             }
@@ -108,8 +108,7 @@ public class NumberedBlock : MonoBehaviour
             AddToStreak();
             if (currentStreak > 1)
             {
-                GameManager.Instance.coins += currentStreak;
-                PlayerPrefs.SetInt("coins", GameManager.Instance.coins);
+                GameManager.Instance.AddCoins(currentStreak);
                 GameObject streakText = Instantiate(streakTextPrefab);
                 streakText.GetComponent<DisplayStreakText>().streakAmount = currentStreak;
                 streakText.transform.position = transform.position + new Vector3(0, 1, 0);
@@ -129,8 +128,7 @@ public class NumberedBlock : MonoBehaviour
             blockComponent.GetComponent<Rigidbody>().AddForce(Random.Range(-100f, 100f), Random.Range(70f, 150f), Random.Range(-45f, 45f));
             if (blockComponent.currentStreak > 1)
             {
-                GameManager.Instance.coins += blockComponent.currentStreak;
-                PlayerPrefs.SetInt("coins", GameManager.Instance.coins);
+                GameManager.Instance.AddCoins(blockComponent.currentStreak);
                 GameObject streakText = Instantiate(streakTextPrefab);
                 streakText.GetComponent<DisplayStreakText>().streakAmount = blockComponent.currentStreak;
                 streakText.transform.position = blockComponent.transform.position + new Vector3(0, 1, 0);
@@ -147,19 +145,8 @@ public class NumberedBlock : MonoBehaviour
         currentStreak++;
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-
-    }
-
     private void OnCollisionStay(Collision collision)
     {
-
         if (canMerge)
         {
             if (collision.collider.tag == gameObject.tag)

@@ -2,13 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class BlockSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject numberedBlockPrefab;
+    [SerializeField] private GameObject bombPrefab;
     [SerializeField] private Collider dragArea;
     [SerializeField] private Collider playingField;
     [SerializeField] private float spawnTime;
+    [SerializeField] private MainMenuLogo mainMenuLogo;
+    [SerializeField] private GameObject directionLine;
 
     private Vector3 startPos;
     private GameObject currentBlock;
@@ -26,62 +30,94 @@ public class BlockSpawner : MonoBehaviour
 
     void Update()
     {
-        if(GameManager.Instance.gameOver)
+        if (GameManager.Instance.gameOver)
         {
             StopAllCoroutines();
-            Destroy(currentBlock);
+            if (currentBlock) Destroy(currentBlock);
             currentBlock = null;
         }
-
-        if(Input.GetMouseButtonDown(0))
+        else
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit))
+            // Prevent shooting and moving when clicking on UI elements
+            if (IsPointerOverUI())
             {
-                if (hit.collider == dragArea)
+                wasMouseOnDragArea = false;
+                return;
+            }
+            MoveBlock();
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
+
+                if (Physics.Raycast(ray, out hit))
                 {
-                    wasMouseOnDragArea = true;
-                }
-                else
-                {
-                    wasMouseOnDragArea = false;
+                    if (hit.collider == dragArea)
+                    {
+                        wasMouseOnDragArea = true;
+                    }
+                    else
+                    {
+                        wasMouseOnDragArea = false;
+                    }
                 }
             }
-        }
 
-        if(wasMouseOnDragArea)
-        {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit))
+            if (wasMouseOnDragArea)
             {
-                if (hit.collider == playingField)
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
+
+                if (Physics.Raycast(ray, out hit))
                 {
-                    ShootBlock();
+                    if (hit.collider == playingField)
+                    {
+                        ShootBlock();
+                    }
                 }
             }
-        }
 
-        if(Input.GetMouseButtonUp(0) && wasMouseOnDragArea)
-        {
-            ShootBlock();
+            if (Input.GetMouseButtonUp(0) && wasMouseOnDragArea)
+            {
+                ShootBlock();
+            }
         }
+    }
 
-        MoveBlock();
+    // Helper function to check if pointer/touch is over UI
+    private bool IsPointerOverUI()
+    {
+        if (EventSystem.current.IsPointerOverGameObject()) return true; // For mouse
+        if (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) return true; // For touch
+        return false;
     }
 
     private void ShootBlock()
     {
+        if (mainMenuLogo.logoShown)
+        {
+            mainMenuLogo.HideLogo();
+        }
+        if(currentBlock == null)
+        {
+            return;
+        }
         wasMouseOnDragArea = false;
         currentBlock.transform.parent = null;
         currentBlock.GetComponent<Collider>().enabled = true;
         currentBlock.GetComponent<Rigidbody>().isKinematic = false;
         currentBlock.GetComponent<Rigidbody>().AddForce(0f, 100f, 700f);
-        currentBlock.GetComponent<NumberedBlock>().canMerge = true;
+        if (currentBlock.GetComponent<NumberedBlock>())
+        {
+            currentBlock.GetComponent<NumberedBlock>().canMerge = true;
+        }
+        else if(currentBlock.GetComponent<BombItem>())
+        {
+            currentBlock.GetComponent<BombItem>().canExplode = true;
+        }
         currentBlock = null;
+        directionLine.SetActive(false);
         StartCoroutine(DelayedBlockSpawn(spawnTime, numberedBlockPrefab));
     }
 
@@ -100,12 +136,28 @@ public class BlockSpawner : MonoBehaviour
         }
     }
 
+    public void SpawnBomb()
+    {
+        if(GameManager.Instance.coins < GameManager.Instance.bombPrice)
+        {
+            return;
+        }
+        StopAllCoroutines();
+        if (currentBlock != null)
+        {
+            Destroy(currentBlock);
+        }
+        SpawnNewBlock(bombPrefab);
+        GameManager.Instance.AddCoins(-GameManager.Instance.bombPrice);
+    }
+
     public void SpawnNewBlock(GameObject block, int value = 0)
     {
         transform.position = startPos;
         MoveBlock();
         GameObject newCube = Instantiate(block, transform);
         currentBlock = newCube;
+        directionLine.SetActive(true);
 
         currentBlock.GetComponent<Collider>().enabled = false;
         currentBlock.GetComponent<Rigidbody>().isKinematic = true;
