@@ -12,6 +12,9 @@ public class NumberedBlock : MonoBehaviour
     public int currentStreak;
     public bool streakRunning;
 
+    public AudioSource mergeSound;
+    public AudioSource streakSound;
+
     private float currentGameOverTime;
     [SerializeField] private float timeUntilGameOver;
     private bool overTheLine;
@@ -69,7 +72,7 @@ public class NumberedBlock : MonoBehaviour
         // Game over warning timer
         if (canMerge && !GameManager.Instance.gameOver)
         {
-            overTheLine = transform.position.z < -9.5f;
+            overTheLine = transform.position.z < -9.5f && transform.position.y > 0 && transform.position.y < 8;
             if (currentGameOverTime < timeUntilGameOver && overTheLine)
             {
                 currentGameOverTime += Time.deltaTime;
@@ -106,15 +109,18 @@ public class NumberedBlock : MonoBehaviour
             SetCubeColor(value);
             GetComponent<Rigidbody>().AddForce(Random.Range(-100f, 100f), Random.Range(70f, 150f), Random.Range(-45f, 45f));
             AddToStreak();
+            mergeSound.pitch = 1 + Random.Range(-0.1f, 0.1f);
+            mergeSound.Play();
             if (currentStreak > 1)
             {
                 GameManager.Instance.AddCoins(currentStreak);
                 GameObject streakText = Instantiate(streakTextPrefab);
                 streakText.GetComponent<DisplayStreakText>().streakAmount = currentStreak;
                 streakText.transform.position = transform.position + new Vector3(0, 1, 0);
+                streakSound.pitch = 1 + 0.1f * currentStreak - 0.2f;
+                streakSound.Play();
             }
             Destroy(target);
-            Debug.Log(currentStreak);
         }
         else
         {
@@ -124,16 +130,18 @@ public class NumberedBlock : MonoBehaviour
             blockComponent.streakRunning = true;
             blockComponent.value *= 2;
             blockComponent.SetCubeColor(blockComponent.value);
-            //blockComponent.AddToStreak();
             blockComponent.GetComponent<Rigidbody>().AddForce(Random.Range(-100f, 100f), Random.Range(70f, 150f), Random.Range(-45f, 45f));
+            blockComponent.mergeSound.pitch = 1 + Random.Range(-0.1f, 0.1f);
+            blockComponent.mergeSound.Play();
             if (blockComponent.currentStreak > 1)
             {
                 GameManager.Instance.AddCoins(blockComponent.currentStreak);
                 GameObject streakText = Instantiate(streakTextPrefab);
                 streakText.GetComponent<DisplayStreakText>().streakAmount = blockComponent.currentStreak;
                 streakText.transform.position = blockComponent.transform.position + new Vector3(0, 1, 0);
+                blockComponent.streakSound.pitch = 1 + 0.1f * blockComponent.currentStreak - 0.2f;
+                blockComponent.streakSound.Play();
             }
-            Debug.Log(blockComponent.currentStreak);
             Destroy(gameObject);
         }
     }

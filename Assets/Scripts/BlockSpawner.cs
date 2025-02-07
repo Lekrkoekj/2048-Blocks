@@ -11,6 +11,7 @@ public class BlockSpawner : MonoBehaviour
     [SerializeField] private Collider dragArea;
     [SerializeField] private Collider playingField;
     [SerializeField] private float spawnTime;
+    [SerializeField] private float shootForce;
     [SerializeField] private MainMenuLogo mainMenuLogo;
     [SerializeField] private GameObject directionLine;
 
@@ -41,7 +42,7 @@ public class BlockSpawner : MonoBehaviour
             // Prevent shooting and moving when clicking on UI elements
             if (IsPointerOverUI())
             {
-                wasMouseOnDragArea = false;
+                //wasMouseOnDragArea = false;
                 return;
             }
             MoveBlock();
@@ -107,7 +108,7 @@ public class BlockSpawner : MonoBehaviour
         currentBlock.transform.parent = null;
         currentBlock.GetComponent<Collider>().enabled = true;
         currentBlock.GetComponent<Rigidbody>().isKinematic = false;
-        currentBlock.GetComponent<Rigidbody>().AddForce(0f, 100f, 700f);
+        currentBlock.GetComponent<Rigidbody>().AddForce(0f, 100f, shootForce);
         if (currentBlock.GetComponent<NumberedBlock>())
         {
             currentBlock.GetComponent<NumberedBlock>().canMerge = true;
@@ -118,6 +119,8 @@ public class BlockSpawner : MonoBehaviour
         }
         currentBlock = null;
         directionLine.SetActive(false);
+        GetComponent<AudioSource>().pitch = 1 + Random.Range(-0.1f, 0.1f);
+        GetComponent<AudioSource>().Play();
         StartCoroutine(DelayedBlockSpawn(spawnTime, numberedBlockPrefab));
     }
 

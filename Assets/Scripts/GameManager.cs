@@ -45,6 +45,10 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         coinCounter.text = $"<sprite=0>  {coins}";
+        if(Input.GetKeyDown("c"))
+        {
+            coins += 100; 
+        }
     }
 
     public void AddCoins(int amount)
