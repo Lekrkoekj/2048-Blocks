@@ -18,9 +18,14 @@ public class NumberedBlock : MonoBehaviour
     private float currentGameOverTime;
     [SerializeField] private float timeUntilGameOver;
     private bool overTheLine;
+    [SerializeField] private Image warningIcon;
+    [SerializeField] private Image warningFill;
+    [SerializeField] private Color fillInColorInactive;
+    [SerializeField] private Color warningIconColorNormal;
+    [SerializeField] private Color warningIconColorInactive;
+
 
     [SerializeField] private GameObject streakTextPrefab;
-    [SerializeField] private Image warningIconFill;
     [SerializeField] private TMP_Text[] valueTexts;
     [SerializeField] private Color[] baseCubeColors;
 
@@ -30,6 +35,11 @@ public class NumberedBlock : MonoBehaviour
     {
         material = GetComponent<MeshRenderer>().material;
         SetCubeColor(value);
+        if(GameManager.Instance.soundMuted == 1)
+        {
+            mergeSound.volume = 0;
+            streakSound.volume = 0;
+        }
     }
 
     public void SetCubeColor(int value)
@@ -76,27 +86,43 @@ public class NumberedBlock : MonoBehaviour
             if (currentGameOverTime < timeUntilGameOver && overTheLine)
             {
                 currentGameOverTime += Time.deltaTime;
+                warningIcon.color = warningIconColorNormal;
+                if (currentGameOverTime > 0.3f)
+                {
+                    warningFill.transform.parent.GetComponent<Animator>().SetBool("overTheLine", true);
+                }
             }
 
             if (currentGameOverTime > 0 && currentGameOverTime < timeUntilGameOver && !overTheLine)
             {
                 currentGameOverTime -= Time.deltaTime;
+                warningFill.color = fillInColorInactive;
+                warningIcon.color = warningIconColorInactive;
+                if(currentGameOverTime > 0.3f)
+                {
+                    warningFill.transform.parent.GetComponent<Animator>().SetBool("overTheLine", false);
+                }
             }
-            warningIconFill.transform.position = Camera.main.WorldToScreenPoint(transform.position);
+            
             if (currentGameOverTime > 0.3f)
             {
-                warningIconFill.transform.parent.gameObject.SetActive(true);
+                warningFill.transform.parent.gameObject.SetActive(true);
             }
             else
             {
-                warningIconFill.transform.parent.gameObject.SetActive(false);
+                warningFill.transform.parent.gameObject.SetActive(false);
             }
             if(currentGameOverTime > timeUntilGameOver && !GameManager.Instance.gameOver)
             {
                 GameManager.Instance.GameOver();
             }
-            warningIconFill.fillAmount = currentGameOverTime / timeUntilGameOver;
+            warningFill.fillAmount = currentGameOverTime / timeUntilGameOver;
         }
+    }
+
+    private void FixedUpdate()
+    {
+        warningFill.transform.position = Camera.main.WorldToScreenPoint(transform.position);
     }
 
     private void MergeBlock(GameObject target)
@@ -107,7 +133,7 @@ public class NumberedBlock : MonoBehaviour
         {
             value *= 2;
             SetCubeColor(value);
-            GetComponent<Rigidbody>().AddForce(Random.Range(-100f, 100f), Random.Range(70f, 150f), Random.Range(-45f, 45f));
+            GetComponent<Rigidbody>().AddForce(Random.Range(-25f, 25f), Random.Range(70f, 150f), Random.Range(-27.5f, 27.5f));
             AddToStreak();
             mergeSound.pitch = 1 + Random.Range(-0.1f, 0.1f);
             mergeSound.Play();
@@ -120,6 +146,7 @@ public class NumberedBlock : MonoBehaviour
                 streakSound.pitch = 1 + 0.1f * currentStreak - 0.2f;
                 streakSound.Play();
             }
+            GameManager.Instance.RemoveBlock(target.GetComponent<NumberedBlock>());
             Destroy(target);
         }
         else
@@ -130,7 +157,7 @@ public class NumberedBlock : MonoBehaviour
             blockComponent.streakRunning = true;
             blockComponent.value *= 2;
             blockComponent.SetCubeColor(blockComponent.value);
-            blockComponent.GetComponent<Rigidbody>().AddForce(Random.Range(-100f, 100f), Random.Range(70f, 150f), Random.Range(-45f, 45f));
+            blockComponent.GetComponent<Rigidbody>().AddForce(Random.Range(0f, 0f), Random.Range(70f, 150f), Random.Range(0f, 0f));
             blockComponent.mergeSound.pitch = 1 + Random.Range(-0.1f, 0.1f);
             blockComponent.mergeSound.Play();
             if (blockComponent.currentStreak > 1)
@@ -142,6 +169,7 @@ public class NumberedBlock : MonoBehaviour
                 blockComponent.streakSound.pitch = 1 + 0.1f * blockComponent.currentStreak - 0.2f;
                 blockComponent.streakSound.Play();
             }
+            GameManager.Instance.RemoveBlock(this);
             Destroy(gameObject);
         }
     }

@@ -4904,7 +4904,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canExplode: 0
-  explosionRadius: 1.25
+  explosionRadius: 1.5
   trigger: {fileID: 6093338906938535368}
   explosionParticles: {fileID: 6007470358044786991}
   model: {fileID: 9135872700710312170}
@@ -14795,6 +14795,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39215176800337841abaed3ca0e303d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bombSound: {fileID: 7252160117693480250}
 --- !u!1 &7577696945475728428
 GameObject:
   m_ObjectHideFlags: 0

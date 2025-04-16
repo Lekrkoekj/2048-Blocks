@@ -5,7 +5,6 @@ using UnityEngine;
 public class BombItem : MonoBehaviour
 {
     public bool canExplode;
-    private bool exploded = false;
     [SerializeField] private float explosionRadius;
 
     [SerializeField] private SphereCollider trigger;
@@ -20,7 +19,6 @@ public class BombItem : MonoBehaviour
     private void Explode()
     {
         trigger.enabled = true;
-        exploded = true;
         explosionParticles.Play();
         explosionParticles.GetComponent<ExplosionSound>().PlaySound();
         explosionParticles.transform.parent = null;

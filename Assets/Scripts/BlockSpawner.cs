@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -14,14 +12,20 @@ public class BlockSpawner : MonoBehaviour
     [SerializeField] private float shootForce;
     [SerializeField] private MainMenuLogo mainMenuLogo;
     [SerializeField] private GameObject directionLine;
+    [SerializeField] private ParticleSystem shootParticles;
 
     private Vector3 startPos;
     private GameObject currentBlock;
     private bool wasMouseOnDragArea;
+    private bool pointerOnUI;
+    private bool pointerDownOnUI;
+
+    private Vector3 lastPointerPos;
+    private Vector3 targetSpawnerPos;
 
     private void Awake()
     {
-        startPos = transform.position;
+        startPos = new Vector3(0, 1, -11.5f);
     }
 
     void Start()
@@ -31,23 +35,41 @@ public class BlockSpawner : MonoBehaviour
 
     void Update()
     {
+        // Stop Block Spawner on game over
         if (GameManager.Instance.gameOver)
         {
             StopAllCoroutines();
-            if (currentBlock) Destroy(currentBlock);
+            if (currentBlock)
+            {
+                // If a bomb is selected when the game finishes, refund the bomb because it hasn't been used.
+                if(currentBlock.GetComponent<BombItem>())
+                {
+                    GameManager.Instance.AddCoins(GameManager.Instance.bombPrice);
+                }
+                Destroy(currentBlock);
+            }
             currentBlock = null;
+            return;
         }
         else
         {
+            ChangeSpawnerPosition();
+
             // Prevent shooting and moving when clicking on UI elements
-            if (IsPointerOverUI())
+            if (pointerOnUI)
             {
-                //wasMouseOnDragArea = false;
+                pointerOnUI = IsPointerOverUI();
                 return;
             }
-            MoveBlock();
+            else if(HasPointerMoved() && !IsPointerOverUI()) MoveBlock();
 
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0) && IsPointerOverUI())
+            {
+                pointerDownOnUI = true;
+            }
+
+            // Check if the pointer presses down on the drag area.
+            if (Input.GetMouseButtonDown(0) && !IsPointerOverUI())
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
@@ -65,6 +87,7 @@ public class BlockSpawner : MonoBehaviour
                 }
             }
 
+            // If pointer pressing down started on the drag area and then moves onto the playing field (for example by swiping up), shoot the block.
             if (wasMouseOnDragArea)
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -79,11 +102,28 @@ public class BlockSpawner : MonoBehaviour
                 }
             }
 
-            if (Input.GetMouseButtonUp(0) && wasMouseOnDragArea)
+            // If pointer clicks on drag area just shoot the block.
+            if (Input.GetMouseButtonUp(0) && !IsPointerOverUI() && !pointerDownOnUI)
             {
-                ShootBlock();
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
+
+                if (Physics.Raycast(ray, out hit))
+                {
+                    if (hit.collider == playingField || hit.collider == dragArea)
+                    {
+                        ShootBlock();
+                    }
+                }
             }
         }
+        pointerDownOnUI = false;
+        lastPointerPos = Input.mousePosition;
+    }
+
+    private bool HasPointerMoved()
+    {
+        return Input.mousePosition != lastPointerPos;
     }
 
     // Helper function to check if pointer/touch is over UI
@@ -112,6 +152,7 @@ public class BlockSpawner : MonoBehaviour
         if (currentBlock.GetComponent<NumberedBlock>())
         {
             currentBlock.GetComponent<NumberedBlock>().canMerge = true;
+            GameManager.Instance.AddBlock(currentBlock.GetComponent<NumberedBlock>());
         }
         else if(currentBlock.GetComponent<BombItem>())
         {
@@ -120,27 +161,50 @@ public class BlockSpawner : MonoBehaviour
         currentBlock = null;
         directionLine.SetActive(false);
         GetComponent<AudioSource>().pitch = 1 + Random.Range(-0.1f, 0.1f);
+        if (GameManager.Instance.soundMuted == 0) GetComponent<AudioSource>().volume = 1;
+        else GetComponent<AudioSource>().volume = 0;
         GetComponent<AudioSource>().Play();
+        shootParticles.Play();
         StartCoroutine(DelayedBlockSpawn(spawnTime, numberedBlockPrefab));
     }
 
-    private void MoveBlock()
+
+    private void ChangeSpawnerPosition()
     {
+        transform.position = Vector3.Lerp(transform.position, targetSpawnerPos, 0.6f);
+    }
+
+    private void MoveBlock()
+    { 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit))
         {
-            if (hit.collider == dragArea)
+            if (hit.collider == dragArea || hit.collider == playingField)
             {
-                Vector3 pos = new Vector3(Mathf.Clamp(hit.point.x, -2.0f, 2.0f), hit.point.y + 0.5f, Mathf.Clamp(hit.point.z, -12f, -10.5f));
-                transform.position = pos;
+                targetSpawnerPos = new Vector3(Mathf.Clamp(hit.point.x, -2.0f, 2.0f), hit.point.y + 0.5f, Mathf.Clamp(hit.point.z, -12f, -10.6f));
+                
+                if(currentBlock != null && !directionLine.activeSelf)
+                {
+                    directionLine.SetActive(true);
+                }
             }
         }
     }
 
     public void SpawnBomb()
     {
+        pointerOnUI = true;
+        // Don't do anything if a bomb is already selected.
+        if(currentBlock != null)
+        {
+            if(currentBlock.GetComponent<BombItem>())
+            {
+                return;
+            }
+        }
+        // Don't do anything if the player doesn't have enough money
         if(GameManager.Instance.coins < GameManager.Instance.bombPrice)
         {
             return;
@@ -150,17 +214,18 @@ public class BlockSpawner : MonoBehaviour
         {
             Destroy(currentBlock);
         }
+        targetSpawnerPos = startPos;
+        transform.position = startPos;
         SpawnNewBlock(bombPrefab);
         GameManager.Instance.AddCoins(-GameManager.Instance.bombPrice);
     }
 
     public void SpawnNewBlock(GameObject block, int value = 0)
     {
+        targetSpawnerPos = startPos;
         transform.position = startPos;
-        MoveBlock();
         GameObject newCube = Instantiate(block, transform);
         currentBlock = newCube;
-        directionLine.SetActive(true);
 
         currentBlock.GetComponent<Collider>().enabled = false;
         currentBlock.GetComponent<Rigidbody>().isKinematic = true;
