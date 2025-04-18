@@ -17,12 +17,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject restartPanel;
     [SerializeField] private GameObject restartButton;
     [SerializeField] private GameObject powerupsContainer;
+    [SerializeField] private SaveBlockPositions save;
 
     public int bombPrice;
     [SerializeField] private Button bombButton;
     [SerializeField] private TMP_Text bombPriceText;
 
-    [SerializeField] private List<NumberedBlock> activeBlocks = new();
+    public List<NumberedBlock> activeBlocks = new();
 
     public int score;
     public int highScore;
@@ -39,6 +40,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Sprite soundOffImg;
     [SerializeField] private Image soundButtonIcon;
     [SerializeField] private AudioSource soundMuteButtonSound;
+
+    [SerializeField] private Button soundMuteButton;
+    [SerializeField] private Button playButton;
+    [SerializeField] private Button shopButton;
 
     private void Awake()
     {
@@ -61,6 +66,7 @@ public class GameManager : MonoBehaviour
         bombPriceText.text = $"<sprite=0> {bombPrice}";
         soundMuted = PlayerPrefs.GetInt("soundMuted", 0);
         SetSoundMute(Convert.ToBoolean(soundMuted));
+        GetComponent<SaveBlockPositions>().LoadFromJson();
     }
 
     // Update is called once per frame
@@ -81,6 +87,31 @@ public class GameManager : MonoBehaviour
         {
             coins += 100;
         }
+    }
+
+    public void LoadSpawnerBlock()
+    {
+        if (save.state.valueInSpawner == 0)
+        {
+            save.spawner.SpawnNewBlock(save.blockPrefab, 2);
+        }
+        else if (save.state.valueInSpawner == 1)
+        {
+            save.spawner.SpawnBomb();
+        }
+        else
+        {
+            save.spawner.SpawnNewBlock(save.blockPrefab, save.state.valueInSpawner);
+        }
+        save.spawner.mainMenuLogo.HideLogo();
+        soundMuteButton.interactable = false;
+        playButton.interactable = false;
+        shopButton.interactable = false;
+    }
+
+    public void OpenShop()
+    {
+        SceneSwitcher.Instance.SwitchScene(1);
     }
 
     public void SetSoundMute(bool muteSound)
@@ -153,25 +184,20 @@ public class GameManager : MonoBehaviour
     public void AddBlock(NumberedBlock block)
     {
         activeBlocks.Add(block);
-        CalculateScore();
+        CalculateScore(block.value);
     }
 
     public void RemoveBlock(NumberedBlock block)
     {
         activeBlocks.Remove(block);
-        CalculateScore();
     }
 
     Coroutine scoreCoroutine;
-    private void CalculateScore()
+    private void CalculateScore(int scoreToAdd)
     {
         if(scoreCoroutine != null) StopCoroutine(scoreCoroutine);
-        int totalScore = 0;
-        activeBlocks.ForEach(block =>
-        {
-            totalScore += block.value;
-        });
-        score = totalScore;
+
+        score += scoreToAdd;
         scoreCoroutine = StartCoroutine(CountUpScore(scoreCountUpSpeed));
 
         highScore = PlayerPrefs.GetInt("highScore", 0);
@@ -211,7 +237,8 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        save.ClearSavedData();
+        SceneSwitcher.Instance.SwitchScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void OpenRestartScreen()

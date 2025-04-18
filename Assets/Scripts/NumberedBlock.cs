@@ -42,6 +42,11 @@ public class NumberedBlock : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        GameManager.Instance.RemoveBlock(this);
+    }
+
     public void SetCubeColor(int value)
     {
         int timesMerged = (int)Mathf.Log(value, 2) - 1;
@@ -146,7 +151,6 @@ public class NumberedBlock : MonoBehaviour
                 streakSound.pitch = 1 + 0.1f * currentStreak - 0.2f;
                 streakSound.Play();
             }
-            GameManager.Instance.RemoveBlock(target.GetComponent<NumberedBlock>());
             Destroy(target);
         }
         else
@@ -169,7 +173,6 @@ public class NumberedBlock : MonoBehaviour
                 blockComponent.streakSound.pitch = 1 + 0.1f * blockComponent.currentStreak - 0.2f;
                 blockComponent.streakSound.Play();
             }
-            GameManager.Instance.RemoveBlock(this);
             Destroy(gameObject);
         }
     }

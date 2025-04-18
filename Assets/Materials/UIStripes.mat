@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: StripedBlockMaterial
-  m_Shader: {fileID: 4800000, guid: f36ec7499a45e194aafaf634a62486f5, type: 3}
+  m_Name: UIStripes
+  m_Shader: {fileID: 4800000, guid: 74f06887163f1be4fba59226d9c5609e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -80,8 +80,9 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _GlobalTime: 15.432865
     - _GlossMapScale: 1
-    - _Glossiness: 0.5
+    - _Glossiness: 0
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
@@ -93,9 +94,12 @@ Material:
     - _StripesSize: 1
     - _StripesSpeed: 2
     - _StripesStrength: 0.04
+    - _TextureMoveSpeed: 0.1
+    - _TextureOpacity: 0.1
+    - _TextureSize: 2.5
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.39215687, g: 0.7176471, b: 0.32156864, a: 1}
+    - _Color: {r: 0.2627451, g: 0.7137255, b: 0.73333335, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

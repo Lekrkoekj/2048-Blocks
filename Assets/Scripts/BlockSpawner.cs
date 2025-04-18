@@ -10,12 +10,12 @@ public class BlockSpawner : MonoBehaviour
     [SerializeField] private Collider playingField;
     [SerializeField] private float spawnTime;
     [SerializeField] private float shootForce;
-    [SerializeField] private MainMenuLogo mainMenuLogo;
+    public MainMenuLogo mainMenuLogo;
     [SerializeField] private GameObject directionLine;
     [SerializeField] private ParticleSystem shootParticles;
 
     private Vector3 startPos;
-    private GameObject currentBlock;
+    public GameObject currentBlock;
     private bool wasMouseOnDragArea;
     private bool pointerOnUI;
     private bool pointerDownOnUI;
@@ -30,7 +30,7 @@ public class BlockSpawner : MonoBehaviour
 
     void Start()
     {
-        SpawnNewBlock(numberedBlockPrefab, 2);
+        
     }
 
     void Update()
@@ -136,10 +136,6 @@ public class BlockSpawner : MonoBehaviour
 
     private void ShootBlock()
     {
-        if (mainMenuLogo.logoShown)
-        {
-            mainMenuLogo.HideLogo();
-        }
         if(currentBlock == null)
         {
             return;
