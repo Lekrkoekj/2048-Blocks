@@ -70,6 +70,5 @@ public class SceneSwitcher : MonoBehaviour
     {
         globalTime += Time.unscaledDeltaTime;
         transitionGraphic.material.SetFloat("_GlobalTime", globalTime);
-        Debug.Log(globalTime);
     }
 }

@@ -164,7 +164,6 @@ public class BlockSpawner : MonoBehaviour
         StartCoroutine(DelayedBlockSpawn(spawnTime, numberedBlockPrefab));
     }
 
-
     private void ChangeSpawnerPosition()
     {
         transform.position = Vector3.Lerp(transform.position, targetSpawnerPos, 0.6f);

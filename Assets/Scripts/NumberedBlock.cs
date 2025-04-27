@@ -44,7 +44,7 @@ public class NumberedBlock : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.RemoveBlock(this);
+        if(GameManager.Instance) GameManager.Instance.RemoveBlock(this);
     }
 
     public void SetCubeColor(int value)
